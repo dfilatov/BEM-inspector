@@ -1,0 +1,23 @@
+.__hilighther_left,
+.__hilighther_top,
+.__hilighther_right,
+.__hilighther_bottom
+{
+    position: absolute;
+    background: #f00;
+    overflow: hidden;
+    display: none;
+    z-index: 60000;
+}
+
+.__hilighther_left,
+.__hilighther_right
+{
+    width: 1px;
+}
+
+.__hilighther_top,
+.__hilighther_bottom
+{
+    height: 1px;
+}
