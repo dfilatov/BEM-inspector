@@ -1,7 +1,4 @@
-.__hilighther_left,
-.__hilighther_top,
-.__hilighther_right,
-.__hilighther_bottom
+.bem-inspector__hilighther
 {
     position: absolute;
     background: #f00;
@@ -10,14 +7,59 @@
     z-index: 60000;
 }
 
-.__hilighther_left,
-.__hilighther_right
+.bem-inspector__hilighther_border_left,
+.bem-inspector__hilighther_border_right
 {
     width: 1px;
 }
 
-.__hilighther_top,
-.__hilighther_bottom
+.bem-inspector__hilighther_border_top,
+.bem-inspector__hilighther_border_bottom
 {
     height: 1px;
+}
+
+.bem-inspector__popup
+{
+    position: absolute;
+    padding: 0 .4em;
+    display: none;
+    background: #fff;
+    border: 1px solid #efefef;
+    border-radius: 3px;
+    -webkit-box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3);
+    z-index: 60001;
+    opacity: .95;
+}
+
+.bem-inspector__bem
+{
+    font-family: 10px Verdana, sans-serif;
+    padding: .3em .2em .1em;
+}
+
+.bem-inspector__bem:last-child
+{
+    padding-bottom: .3em;
+}
+
+.bem-inspector__bem-title {
+    font-size: 1.2em;
+    white-space: nowrap;
+}
+
+.bem-inspector__bem_type_elem .bem-inspector__bem-title
+{
+    color: #056e0b;
+}
+
+.bem-inspector__bem-mods
+{
+    white-space: nowrap;
+}
+
+.bem-inspector__bem-mod-name,
+.bem-inspector__bem-mod-val
+{
+    padding-left: .5em;
 }
