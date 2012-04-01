@@ -2,10 +2,6 @@
     "name"            : "BEM inspector",
     "version"         : "0.1",
     "description"     : "Inspector for BEM",
-    "browser_action"  : {
-        "default_icon"  : "icon.png",
-        "default_title" : "enable BEM inspector"
-    },
     "content_scripts" : [
         {
             "matches" : ["<all_urls>"],
@@ -13,5 +9,8 @@
             "js"      : ["jquery.js", "bem-inspector.js"],
             "run_at"  : "document_end"
         }
-    ]
+    ],
+    "devtools_page"   : "devtools.html",
+    "permissions"     : ["tabs"],
+    "background"      : { "scripts" : ["background.js"] }
 }

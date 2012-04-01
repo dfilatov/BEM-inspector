@@ -1,0 +1,26 @@
+<html>
+    <body>
+         BEM
+    </body>
+<script type="text/javascript">
+
+var messageMap = {
+        'init'      : onInit,
+        'bem-nodes' : onGetBEMNodes
+    },
+    port = chrome.extension.connect();
+
+port.onMessage.addListener(function(msg) {
+    messageMap[msg.name](msg.data);
+});
+
+function onInit() {
+    port.postMessage({ name : 'get-bem-nodes' });
+}
+
+function onGetBEMNodes(nodes) {
+    document.body.innerHTML = JSON.stringify(nodes);
+}
+
+</script>
+</html>

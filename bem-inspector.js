@@ -1,6 +1,6 @@
 (function() {
 
-var curElem,
+/*var curElem,
     hilightElems = {},
     popupElem = $('<div class="bem-inspector__popup"/>').appendTo('body'),
     bemRE = /^[bi]\-[a-zA-Z0-9-]+(__[a-zA-Z0-9-]+)?$/;
@@ -9,52 +9,6 @@ $.each(['left', 'top', 'right', 'bottom'], function(i, border) {
     hilightElems[border] = $('<div class="bem-inspector__hilighther bem-inspector__hilighther_border_' + border +'"/>')
         .appendTo('body');
 });
-
-function getNodeBEMs(node) {
-
-    return node.className?
-        node.className.split(' ').filter(function(item) {
-            return bemRE.test(item = item.trim()) && item !== 'i-bem';
-        }) :
-        [];
-
-}
-
-function getClosestBEMs(node) {
-
-    var bems;
-    do {
-        if((bems = getNodeBEMs(node)).length) {
-            return { node : $(node), bems : bems };
-        }
-    }
-    while(node = node.parentNode);
-
-    return null;
-
-}
-
-function bemIsElem(bem) {
-    return bem.indexOf('__') > -1;
-}
-
-function extractMods(node, bem) {
-
-    var res;
-
-    node.className && node.className.split(' ').forEach(function(item) {
-        var hasMod = (item = item.trim()).indexOf(bem + '_') === 0 && item.indexOf(bem + '__') === -1;
-        if(hasMod) {
-            var modNameIdx = bem.length + 1,
-                modValIdx = item.indexOf('_', modNameIdx) + 1;
-            modValIdx &&
-                ((res || (res = {}))[item.substr(modNameIdx, modValIdx - modNameIdx - 1)] = item.substr(modValIdx));
-        }
-    });
-
-    return res;
-
-}
 
 function hilight(bems) {
 
@@ -132,5 +86,76 @@ $('body').on(
         }
     },
     '*');
+*/
+
+var nodes = {},
+    nodeId = 1,
+    expando = '__id_' + (+new Date);
+function getNodeId(node) {
+    if(!node[expando]) {
+        nodes[nodeId] = node;
+        node[expando] = nodeId++;
+    }
+
+    return node[expando];
+}
+
+
+var bemRE = /^([bi]\-[a-zA-Z0-9-]+)(?:__([a-zA-Z0-9-]+))?(?:_([a-zA-Z0-9-]+))?(?:_([a-zA-Z0-9-]+))?$/;
+function getNodeBEMs(node) {
+
+    if(!node.className) {
+        return [];
+    }
+
+    var blocksAndElems = {};
+
+    node.className.split(' ').forEach(function(item) {
+        item = item.trim();
+        if(item === 'i-bem') {
+            return;
+        }
+        var matched = item.trim().match(bemRE);
+        if(matched) {
+            var key = matched[1] + (matched[2]? '__' + matched[2] : '');
+            blocksAndElems[key] || (blocksAndElems[key] = { block : matched[1], elem : matched[2] });
+            matched[3] && ((blocksAndElems[key].mods || (blocksAndElems[key].mods = {}))[matched[3]] = matched[4]);
+        }
+    });
+
+    var res = [];
+    for(var key in blocksAndElems) {
+        blocksAndElems.hasOwnProperty(key) && res.push(blocksAndElems[key]);
+    }
+
+    return res;
+
+}
+
+function getBEMNodes(parentId) {
+
+    var parentNode = parentId? nodes[parentId] : document,
+        snapshot = document.evaluate('//*[starts-with(@class, "b-") and not(ancestor::*[starts-with(@class, "b-")])]', parentNode, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
+        child, i = 0, len = snapshot.snapshotLength, nodeBEMs,
+        res = { parentId : parentId, children : [] };
+
+    while(i < len) {
+        child = snapshot.snapshotItem(i++);
+        nodeBEMs = getNodeBEMs(child);
+        nodeBEMs.length && res.children.push({ id : getNodeId(child), bem : nodeBEMs });
+    }
+
+    return res;
+
+}
+
+chrome.extension.onConnect.addListener(function(port) {
+    port.onMessage.addListener(function(msg) {
+        if(msg.name == 'get-bem-nodes') {
+            port.postMessage({ name : 'bem-nodes', data : getBEMNodes(msg.data) });
+        }
+    });
+    port.postMessage({ name : 'init' });
+});
 
 })();
