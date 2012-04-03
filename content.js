@@ -132,17 +132,41 @@ function getNodeBEMs(node) {
 
 }
 
+function xPathQuery(query, ctx, resultType) {
+
+    return document.evaluate(
+        query,
+        ctx,
+        null,
+        XPathResult[resultType || 'ORDERED_NODE_SNAPSHOT_TYPE'],
+        null);
+
+}
+
+var isBEMPredicate = 'starts-with(@class, "b-") or starts-with(@class, "i-")';
 function getBEMNodes(parentId) {
 
     var parentNode = parentId? nodes[parentId] : document,
-        snapshot = document.evaluate('//*[starts-with(@class, "b-") and not(ancestor::*[starts-with(@class, "b-")])]', parentNode, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
+        countBEMAncestors = xPathQuery(
+            'count(ancestor::*[' + isBEMPredicate + '])',
+            parentNode,
+            'NUMBER_TYPE')
+                .numberValue + (parentId? 1 : 0),
+        snapshot = xPathQuery(
+            './/*[(' + isBEMPredicate + ') and count(ancestor::*[' + isBEMPredicate + ']) = ' + countBEMAncestors + ']',
+            parentNode),
         child, i = 0, len = snapshot.snapshotLength, nodeBEMs,
         res = { parentId : parentId, children : [] };
 
     while(i < len) {
         child = snapshot.snapshotItem(i++);
         nodeBEMs = getNodeBEMs(child);
-        nodeBEMs.length && res.children.push({ id : getNodeId(child), bem : nodeBEMs });
+        nodeBEMs.length &&
+            res.children.push({
+                id          : getNodeId(child),
+                bem         : nodeBEMs,
+                hasChildren : !!xPathQuery('count(.//*[' + isBEMPredicate + '])', child, 'NUMBER_TYPE').numberValue
+            });
     }
 
     return res;

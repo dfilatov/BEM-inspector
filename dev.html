@@ -1,0 +1,71 @@
+<html>
+    <body>
+         BEM
+    </body>
+<script type="text/javascript">
+
+function BEMTree(root) {
+    (this._nodes = {})[root.getId()] = root;
+}
+
+BEMTree.prototype = {
+    addNodes : function(nodes, parentId) {
+        this._nodes[parentId].addChildren(node);
+    }
+};
+
+function BEMTreeNode(id, bem, hasChildren) {
+    this._id = id;
+    this._bem = bem;
+    this._hasChildren = hasChildren;
+    this._children = [];
+    this._parent = null;
+    this._wasOpened = false;
+    this._elem = null;
+}
+
+BEMTreeNode.prototype = {
+    getElem : function() {
+        return this._elem;
+    },
+
+    setParent : function(parent) {
+        this._parent = parent;
+        return this;
+    },
+
+    addChildren : function(nodes) {
+        var t = this,
+            children = t._children;
+        nodes.forEach(function(node) {
+            children.push(node.setParent(t));
+        });
+        t._render();
+    },
+
+    _render : function() {
+        this._parent.getElem();
+    }
+};
+
+
+var messageMap = {
+        'init'      : onInit,
+        'bem-nodes' : onGetBEMNodes
+    },
+    port = chrome.extension.connect();
+
+port.onMessage.addListener(function(msg) {
+    messageMap[msg.name](msg.data);
+});
+
+function onInit() {
+    port.postMessage({ name : 'get-bem-nodes' });
+}
+
+function onGetBEMNodes(nodes) {
+    document.body.innerHTML = JSON.stringify(nodes);
+}
+
+</script>
+</html>
