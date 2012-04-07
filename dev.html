@@ -1,7 +1,7 @@
 <html>
-    <body>
-         BEM
-    </body>
+    <script type="text/javascript" src="jquery.js"></script>
+    <body></body>
+
 <script type="text/javascript">
 
 function BEMTree(root) {
@@ -9,8 +9,16 @@ function BEMTree(root) {
 }
 
 BEMTree.prototype = {
-    addNodes : function(nodes, parentId) {
-        this._nodes[parentId].addChildren(node);
+    addNodes : function(parentId, nodes) {
+        var t = this;
+        nodes.forEach(function(node) {
+            t._nodes[node.getId()] = node;
+        });
+        t.getNode(parentId).addChildren(nodes);
+    },
+
+    getNode : function(id) {
+        return this._nodes[id];
     }
 };
 
@@ -20,11 +28,15 @@ function BEMTreeNode(id, bem, hasChildren) {
     this._hasChildren = hasChildren;
     this._children = [];
     this._parent = null;
-    this._wasOpened = false;
-    this._elem = null;
+    this._wasOpened = this._isOpened = false;
+    this._elem = this._childrenElem = null;
 }
 
 BEMTreeNode.prototype = {
+    getId : function() {
+        return this._id;
+    },
+
     getElem : function() {
         return this._elem;
     },
@@ -36,15 +48,20 @@ BEMTreeNode.prototype = {
 
     addChildren : function(nodes) {
         var t = this,
-            children = t._children;
+            children = t._children,
+            childrenContainer = t._childrenElem || $('<ul/>');
         nodes.forEach(function(node) {
             children.push(node.setParent(t));
+            node.render(childrenContainer);
         });
-        t._render();
+        t.getElem().append(childrenContainer);
     },
 
-    _render : function() {
-        this._parent.getElem();
+    render : function(container) {
+        container.append(
+            this._elem = $('<li class="b-bem-tree__item">' +
+                     '<span class="b-bem-tree__item-bem" id="i' + this.getId() + '">' + JSON.stringify(this._bem) + '</span>' +
+                '</li>'));
     }
 };
 
@@ -59,13 +76,26 @@ port.onMessage.addListener(function(msg) {
     messageMap[msg.name](msg.data);
 });
 
+var rootElem = $('<ul class="b-bem-tree"/>"').appendTo('body'),
+    rootNode = new BEMTreeNode(0, { block : 'BEM' }, true),
+    tree = new BEMTree(rootNode);
+
 function onInit() {
-    port.postMessage({ name : 'get-bem-nodes' });
+    rootElem.delegate('.b-bem-tree__item-bem', 'click', function() {
+        port.postMessage({ name : 'get-bem-nodes', data : +this.id.substr(1) });
+    });
+
+    rootNode.render(rootElem);
 }
 
-function onGetBEMNodes(nodes) {
-    document.body.innerHTML = JSON.stringify(nodes);
+function onGetBEMNodes(data) {
+    tree.addNodes(
+        data.parentId,
+        data.children.map(function(child) {
+            return new BEMTreeNode(child.id, child.bem, child.hasChildren);
+        }));
 }
+
 
 </script>
 </html>
